@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% block title %}{{ t('nav.jobs') }}{% endblock %}
+{% block body %}
+<h1>{{ t('nav.jobs') }}</h1>
+<p>{% for s in ('failed', 'queued', 'running', 'done') %}<a href="?status={{ s }}">{{ t('jobs.' ~ s) }} ({{ counts.get(s, 0) }})</a>{{ ' · ' if not loop.last }}{% endfor %}</p>
+<div class="card"><table>
+  <tr><th>#</th><th>{{ t('col.kind') }}</th><th>{{ t('col.payload') }}</th><th>{{ t('col.attempts') }}</th><th>{{ t('col.error') }}</th><th></th></tr>
+  {% for j in rows %}<tr><td>{{ j.id }}</td><td>{{ j.kind }}</td><td class="mono">{{ j.payload }}</td><td>{{ j.attempts }}</td><td class="mono chunk">{{ j.error or '' }}</td>
+    <td>{% if j.status == 'failed' %}<form method="post" action="/admin/jobs/{{ j.id }}/retry" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}"><button>{{ t('action.retry') }}</button></form>{% endif %}
+        {% if j.status in ('failed', 'done') %}<form method="post" action="/admin/jobs/{{ j.id }}/delete" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}"><button>{{ t('action.delete') }}</button></form>{% endif %}</td></tr>
+  {% else %}<tr><td colspan="6" class="muted">{{ t('jobs.none') }}</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}{% block title %}{{ t('batch.title', id=b.id) }}{% endblock %}
+{% block body %}
+<h1>{{ t('batch.title', id=b.id) }} · {{ b.label }} <span class="badge {{ b.status }}">{{ t('state.' ~ b.status) }}</span></h1>
+<div class="card">
+  <p>{{ t('field.category') }} <code>{{ b.source }}</code> · {{ t('batch.kind_full_long') if b.kind == 'full' else t('batch.kind_partial') }} ·
+     {{ t('col.owner') }} {% if b.owner_id %}<a href="/admin/users/{{ b.owner_id }}">{{ b.owner_nickname or b.owner_email }}</a>{% else %}—{% endif %} ·
+     {{ t('batch.new_versions') }} {{ b.stats.get('new_versions', '–') }} · {{ t('batch.unchanged') }} {{ b.stats.get('unchanged', '–') }}
+     {% if pending %} · <span class="warn">{{ t('batch.pending_jobs', n=pending) }}</span>{% endif %}
+     {% if no_vector %} · <span class="warn">{{ t('batch.no_vector', n=no_vector) }}{% if b.embed == 'remote' %} {{ t('batch.remote_embed') }}{% endif %}</span>{% endif %}</p>
+  {% if b.status in ('staging', 'retired') %}
+  <form method="post" action="/admin/batches/{{ b.id }}/publish" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="primary">{{ t('action.publish') }}</button></form>
+  {% endif %}
+  {% if b.status in ('staging', 'published') %}
+  <form method="post" action="/admin/batches/{{ b.id }}/retire" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}"><button>{{ t('batch.retire_button') }}</button></form>
+  {% endif %}
+  <form method="post" action="/admin/batches/{{ b.id }}/reprocess-all" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}"><button>{{ t('batch.reprocess_all') }}</button></form>
+</div>
+{% if b.stats.get('skipped') %}
+<div class="card"><p class="muted">{{ t('col.skipped') }}:</p><table>{% for p, r in b.stats['skipped'] %}<tr><td><code>{{ p }}</code></td><td class="muted">{{ t(r) }}</td></tr>{% endfor %}</table></div>
+{% endif %}
+<div class="card"><table>
+  <tr><th>{{ t('col.document') }}</th><th>{{ t('col.key') }}</th><th>{{ t('col.title') }}</th><th>{{ t('batch.this_batch') }}</th><th>{{ t('col.chunks') }}</th><th>{{ t('col.notes') }}</th></tr>
+  {% for d in docs %}<tr><td><a href="/admin/documents/{{ d.document_id }}">{{ d.document_id }}</a></td><td><code>{{ d.key }}</code></td>
+    <td>{{ d.title or '' }}{% if d.url %} <a href="{{ d.url }}" target="_blank" rel="noopener">↗</a>{% endif %}</td>
+    <td>{{ t('batch.new_version') if d.new_version else t('batch.unchanged') }}</td><td>{{ d.chunks }}</td>
+    <td>{% if d.notes and d.notes.get('eval_sum_not_100') %}<span class="warn">{{ t('note.eval_sum', n=d.eval_sum) }}</span>{% endif %}{% if d.notes and d.notes.get('no_evaluation_table') %}<span class="warn">{{ t('note.no_eval') }}</span>{% endif %}{% if d.parse_error %}<span class="warn" title="{{ d.parse_error }}">{{ t('my.parse_error') }}</span>{% endif %}</td></tr>
+  {% else %}<tr><td colspan="6" class="muted">{{ t('batch.empty') }}</td></tr>{% endfor %}
+</table></div>
+<h2 class="warn">{{ t('batch.purge_title') }}</h2>
+<form class="card" method="post" action="/admin/batches/{{ b.id }}/purge-batch">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <p class="muted">{{ t('batch.purge_help') }}</p>
+  <div class="row"><div><label>{{ t('field.reason') }}</label><input type="text" name="reason" required minlength="3"></div>
+    <div><label>{{ t('docs.purge_type', phrase=t('batch.purge_phrase', id=b.id)) }}</label><input type="text" name="confirm" required></div></div>
+  <p><button class="danger">{{ t('batch.purge_button') }}</button></p>
+</form>
+{% endblock %}

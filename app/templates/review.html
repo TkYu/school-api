@@ -1,0 +1,15 @@
+{% extends "base.html" %}{% block title %}{{ t('nav.review') }}{% endblock %}
+{% block body %}
+<h1>{{ t('nav.review') }} <span class="muted">({{ rows|length }})</span></h1>
+<p class="muted">{{ t('review.intro') }}</p>
+<div class="card"><table>
+  <tr><th>#</th><th>{{ t('col.submitted') }}</th><th>{{ t('col.owner') }}</th><th>{{ t('field.category') }}</th><th>{{ t('col.label') }}</th><th>{{ t('col.files') }}</th><th></th></tr>
+  {% for b in rows %}<tr><td><a href="/admin/batches/{{ b.id }}">{{ b.id }}</a></td><td class="muted">{{ b.started_at.strftime('%Y-%m-%d %H:%M') }}</td>
+    <td>{% if b.owner_id %}<a href="/admin/users/{{ b.owner_id }}">{{ b.nickname or b.email }}</a>{% else %}<span class="muted">{{ t('review.ingest') }}</span>{% endif %}</td>
+    <td>{{ b.category }}</td><td>{{ b.label }}</td><td>{{ b.files }}</td>
+    <td><a href="/admin/batches/{{ b.id }}">{{ t('review.look') }}</a>
+      <form method="post" action="/admin/batches/{{ b.id }}/publish" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="next" value="/admin/review"><button class="primary">{{ t('action.publish') }}</button></form>
+      <form method="post" action="/admin/batches/{{ b.id }}/retire" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="next" value="/admin/review"><button>{{ t('review.reject') }}</button></form></td></tr>
+  {% else %}<tr><td colspan="7" class="muted">{{ t('review.none') }}</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

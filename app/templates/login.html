@@ -1,0 +1,14 @@
+{% extends "base.html" %}{% block title %}{{ t('login.title') }}{% endblock %}
+{% block body %}
+<div class="card narrow">
+  <h1>{{ t('login.title') }}</h1>
+  {% if first %}<p class="warn">{{ t('login.first_hint') }}</p>{% endif %}
+  <form method="post" action="/admin/login">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>{{ t('field.email') }}</label><input type="email" name="email" autocomplete="username" autofocus required>
+    <label>{{ t('field.password') }}</label><input type="password" name="password" autocomplete="current-password" required>
+    <p><button class="primary">{{ t('login.submit') }}</button></p>
+  </form>
+  <p class="muted"><a href="/admin/forgot">{{ t('login.forgot') }}</a> · <a href="/admin/signup">{{ t('login.signup') }}</a></p>
+</div>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}{% block title %}{{ t('nav.overview') }}{% endblock %}
+{% block body %}
+<h1>{{ t('nav.overview') }}</h1>
+<div class="card stats">
+  <div><b>{{ jobs.get('queued', 0) }}</b><span class="muted">{{ t('jobs.queued') }}</span></div>
+  <div><b>{{ jobs.get('running', 0) }}</b><span class="muted">{{ t('jobs.running') }}</span></div>
+  <div><b class="{{ 'warn' if jobs.get('failed') }}">{{ jobs.get('failed', 0) }}</b><span class="muted">{{ t('jobs.failed') }}</span></div>
+  <div><b>{{ jobs.get('done', 0) }}</b><span class="muted">{{ t('jobs.done') }}</span></div>
+  <div><b class="{{ 'warn' if pending_reviews }}"><a href="/admin/review">{{ pending_reviews }}</a></b><span class="muted">{{ t('nav.review') }}</span></div>
+</div>
+<h2>{{ t('nav.categories') }}</h2>
+<div class="card"><table>
+  <tr><th>{{ t('col.name') }}</th><th>{{ t('col.id') }}</th><th>{{ t('col.parser') }}</th><th>{{ t('nav.documents') }}</th><th>{{ t('col.live') }}</th></tr>
+  {% for s in sources %}<tr><td><a href="/admin/documents?source={{ s.name|urlencode }}">{{ s.label }}</a></td><td><code>{{ s.name }}</code></td><td>{{ t('kind.' ~ s.kind) }}</td><td>{{ s.documents }}</td><td>{{ s.live }}</td></tr>
+  {% else %}<tr><td colspan="5" class="muted">{{ t('overview.no_sources') }}</td></tr>{% endfor %}
+</table></div>
+<h2>{{ t('overview.recent_batches') }}</h2>
+<div class="card"><table>
+  <tr><th>#</th><th>{{ t('field.category') }}</th><th>{{ t('col.label') }}</th><th>{{ t('col.owner') }}</th><th>{{ t('col.kind') }}</th><th>{{ t('col.state') }}</th><th>{{ t('col.new_unchanged') }}</th><th>{{ t('col.started') }}</th></tr>
+  {% for b in batches %}<tr><td><a href="/admin/batches/{{ b.id }}">{{ b.id }}</a></td><td><code>{{ b.source }}</code></td><td>{{ b.label }}</td><td>{{ b.owner or '' }}</td>
+    <td>{{ t('batch.kind_full') if b.kind == 'full' else t('batch.kind_partial') }}</td><td><span class="badge {{ b.status }}">{{ t('state.' ~ b.status) }}</span></td>
+    <td>{{ b.stats.get('new_versions', '–') }} / {{ b.stats.get('unchanged', '–') }}</td><td class="muted">{{ b.started_at.strftime('%Y-%m-%d %H:%M') }}</td></tr>
+  {% else %}<tr><td colspan="8" class="muted">{{ t('overview.no_batches') }}</td></tr>{% endfor %}
+</table></div>
+{% if failed %}
+<h2 class="warn">{{ t('overview.failed_jobs') }}</h2>
+<div class="card"><table>
+  <tr><th>#</th><th>{{ t('col.kind') }}</th><th>{{ t('col.payload') }}</th><th>{{ t('col.attempts') }}</th><th>{{ t('col.error') }}</th></tr>
+  {% for j in failed %}<tr><td>{{ j.id }}</td><td>{{ j.kind }}</td><td class="mono">{{ j.payload }}</td><td>{{ j.attempts }}</td><td class="mono chunk">{{ j.error }}</td></tr>{% endfor %}
+</table></div>
+{% endif %}
+<h2>{{ t('nav.log') }}</h2>
+<div class="card"><table>
+  <tr><th>{{ t('col.time') }}</th><th>{{ t('col.who') }}</th><th>{{ t('col.action') }}</th><th>{{ t('col.target') }}</th><th>{{ t('col.detail') }}</th></tr>
+  {% for a in audit %}<tr><td class="muted">{{ a.at.strftime('%m-%d %H:%M') }}</td><td>{{ a.actor }}</td><td>{{ a.action }}</td><td>{{ a.target }}</td><td class="mono">{{ a.detail }}</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

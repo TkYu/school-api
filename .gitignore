@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.env
+data/
+run/
+backups/
+secrets/
+.deployed
+
+# a deployment's own compose file (e.g. a Unix socket for the reverse proxy); compose.yml / compose.gpu.yml are the published ones
+compose.local.yml
+
+# the school's own documents used as test inputs: not ours to publish (put them there locally to run those tests)
+tests/fixtures/*.pdf

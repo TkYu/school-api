@@ -1,0 +1,31 @@
+{% extends "base.html" %}{% block title %}{{ u.email }}{% endblock %}
+{% block body %}
+<h1><a href="/admin/users">{{ t('nav.users') }}</a> · {{ u.nickname or u.email }}</h1>
+{% if new_password %}<div class="card"><p>{{ t('user.new_password_once') }}</p><p class="secret">{{ new_password }}</p></div>{% endif %}
+<div class="card">
+  <p>{{ u.email }} · {{ t('role.' ~ u.role) }} ·
+    {% if u.disabled_at %}<span class="badge retired">{{ t('users.disabled') }}</span>{% elif not u.confirmed_at %}<span class="badge staging">{{ t('users.unconfirmed') }}</span>{% else %}<span class="badge published">{{ t('users.active') }}</span>{% endif %}
+    · {{ t('user.registered') }} {{ u.created_at.strftime('%Y-%m-%d') }} · {{ t('users.last_login') }} {{ u.last_login_at.strftime('%Y-%m-%d %H:%M') if u.last_login_at else '—' }}
+    {% if u.must_change_password %} · <span class="warn">{{ t('user.must_change') }}</span>{% endif %}</p>
+  {% if u.role != 'admin' %}
+  {% if u.disabled_at %}
+  <form method="post" action="/admin/users/{{ u.id }}/enable" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="primary">{{ t('user.enable') }}</button></form>
+  {% else %}
+  <form method="post" action="/admin/users/{{ u.id }}/disable" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="danger">{{ t('user.disable') }}</button></form>
+  {% endif %}
+  <form method="post" action="/admin/users/{{ u.id }}/reset-password" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}"><button>{{ t('user.reset_password') }}</button></form>
+  <a href="/admin/documents?owner={{ u.id }}">{{ t('user.documents') }}</a>
+  {% else %}
+  <p class="muted">{{ t('user.admin_note') }}</p>
+  {% endif %}
+</div>
+<h2>{{ t('users.submissions') }}</h2>
+<div class="card"><table>
+  <tr><th>#</th><th>{{ t('col.submitted') }}</th><th>{{ t('field.category') }}</th><th>{{ t('col.files') }}</th><th>{{ t('col.state') }}</th><th></th></tr>
+  {% for b in batches %}<tr><td><a href="/admin/batches/{{ b.id }}">{{ b.id }}</a></td><td class="muted">{{ b.started_at.strftime('%Y-%m-%d %H:%M') }}</td>
+    <td>{{ b.category }}</td><td>{{ b.files }}</td><td><span class="badge {{ b.status }}">{{ t('state.' ~ b.status) }}</span></td>
+    <td>{% if b.status in ('staging', 'retired') %}<form method="post" action="/admin/batches/{{ b.id }}/publish" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="next" value="/admin/users/{{ u.id }}"><button class="primary">{{ t('action.publish') }}</button></form>{% endif %}
+        {% if b.status in ('staging', 'published') %}<form method="post" action="/admin/batches/{{ b.id }}/retire" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="next" value="/admin/users/{{ u.id }}"><button>{{ t('action.retire') }}</button></form>{% endif %}</td></tr>
+  {% else %}<tr><td colspan="6" class="muted">{{ t('my.none') }}</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

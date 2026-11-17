@@ -1,0 +1,18 @@
+{% extends "base.html" %}{% block title %}{{ t('signup.title') }}{% endblock %}
+{% block body %}
+<div class="card narrow">
+  <h1>{{ t('signup.title') }}</h1>
+  <p class="muted">{{ t('signup.intro') }}</p>
+  {% if first %}<p class="warn">{{ t('signup.first_hint') }}</p>{% endif %}
+  {% if not mail_ok %}<p class="warn">{{ t('err.mail_not_configured') }}</p>{% endif %}
+  <form method="post" action="/admin/signup">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>{{ t('field.email') }}</label><input type="email" name="email" autocomplete="email" required autofocus>
+    <label>{{ t('field.nickname') }}</label><input type="text" name="nickname" maxlength="60" autocomplete="nickname">
+    <label>{{ t('field.password_new') }}</label><input type="password" name="password" autocomplete="new-password" minlength="10" required>
+    <label>{{ t('field.password_again') }}</label><input type="password" name="password2" autocomplete="new-password" minlength="10" required>
+    <p><button class="primary">{{ t('signup.submit') }}</button></p>
+  </form>
+  <p class="muted"><a href="/admin/login">{{ t('signup.have_account') }}</a></p>
+</div>
+{% endblock %}

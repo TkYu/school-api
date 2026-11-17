@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% if q %}{{ q }} - {% endif %}SIT 情報検索</title>
+<meta name="robots" content="{% if q %}noindex{% else %}index{% endif %}">
+<style>
+  :root { --bg:#fff; --fg:#1f1f1f; --muted:#666; --line:#e3e3e3; --link:#1a0dab; --url:#008650; --accent:#de5833;
+          --box:#fff; --shadow:0 2px 6px rgba(0,0,0,.12); --chip:#f2f2f2; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#1c1c1c; --fg:#e8e8e8; --muted:#a0a0a0; --line:#333; --link:#8ab4f8; --url:#6cc497; --box:#282828;
+            --shadow:0 2px 6px rgba(0,0,0,.5); --chip:#2c2c2c; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg);
+         font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo",sans-serif; }
+  a { color:var(--link); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  form.search { display:flex; align-items:center; background:var(--box); border:1px solid var(--line); border-radius:24px;
+                box-shadow:var(--shadow); padding:4px 6px 4px 18px; }
+  form.search input { flex:1; border:0; outline:0; background:transparent; color:var(--fg); font-size:17px; padding:10px 0; min-width:0; }
+  form.search button { border:0; background:var(--accent); color:#fff; border-radius:20px; width:42px; height:38px; font-size:17px; cursor:pointer; }
+  .logo { font-weight:700; letter-spacing:.02em; color:var(--fg); }
+  .logo span { color:var(--accent); }
+  /* home */
+  .home { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 20px 18vh; }
+  .home .logo { font-size:40px; margin-bottom:6px; }
+  .home .tagline { color:var(--muted); margin:0 0 26px; font-size:15px; }
+  .home form.search { width:min(640px, 100%); }
+  .home .hints { margin-top:18px; display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+  .home .hints a { background:var(--chip); color:var(--fg); border-radius:16px; padding:6px 12px; font-size:14px; }
+  /* results */
+  header.top { border-bottom:1px solid var(--line); padding:14px 20px 0; }
+  header.top .row { display:flex; align-items:center; gap:18px; max-width:980px; }
+  header.top .logo { font-size:22px; white-space:nowrap; width:150px; flex:none; }
+  header.top form.search { flex:1; max-width:640px; box-shadow:none; }
+  nav.tabs { display:flex; gap:22px; margin:12px 0 0 168px; font-size:14px; }
+  nav.tabs a { color:var(--muted); padding:8px 0 10px; border-bottom:3px solid transparent; }
+  nav.tabs a.on { color:var(--fg); border-color:var(--accent); font-weight:600; }
+  main.results { max-width:660px; margin:0 0 40px 188px; padding:8px 0; }
+  .hit { margin:22px 0; }
+  .hit .meta { font-size:13px; color:var(--url); display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .hit .meta .badge { background:var(--chip); color:var(--muted); border-radius:4px; padding:1px 6px; font-size:12px; }
+  .hit .meta .date { color:var(--muted); }
+  .hit h2 { font-size:18px; font-weight:500; margin:4px 0; line-height:1.35; }
+  .hit p { margin:0; color:var(--fg); font-size:14px; line-height:1.6; }
+  .hit p b { font-weight:700; }
+  .hit .sub { color:var(--muted); font-size:12px; margin-top:3px; }
+  .notice { color:var(--muted); font-size:14px; margin:18px 0; }
+  .more a { display:inline-block; margin-top:8px; border:1px solid var(--line); border-radius:18px; padding:8px 18px; color:var(--fg); }
+  footer { color:var(--muted); font-size:12px; padding:18px 20px 26px; text-align:center; }
+  footer.fixed { position:fixed; bottom:0; left:0; right:0; }
+  @media (max-width:760px) {
+    header.top .row { flex-wrap:wrap; gap:10px; }
+    header.top .logo { width:auto; }
+    header.top form.search { flex-basis:100%; }
+    nav.tabs { margin-left:0; overflow-x:auto; }
+    main.results { margin:0 16px 40px; }
+  }
+</style>
+</head>
+<body>
+{% if not q %}
+<div class="home">
+  <div class="logo">SIT <span>情報検索</span></div>
+  <p class="tagline">湘南工科大学の公式サイト・シラバス・学生掲示板をまとめて検索</p>
+  <form class="search" action="/" method="get" role="search">
+    <input name="q" type="search" placeholder="例：奨学金 申請、履修登録期間、メディア授業" autofocus autocomplete="off" aria-label="検索">
+    <button type="submit" aria-label="検索">⌕</button>
+  </form>
+  <div class="hints">
+    <a href="/?q=履修登録期間">履修登録期間</a>
+    <a href="/?q=奨学金+申請">奨学金 申請</a>
+    <a href="/?q=学内Wi-Fi">学内Wi-Fi</a>
+    <a href="/?q=証明書の発行">証明書の発行</a>
+    <a href="/?q=プログラミング&t=syllabus">プログラミング（シラバス）</a>
+  </div>
+</div>
+<footer class="fixed">学生による非公式の検索サービスです。内容は必ず各リンク先の原文でご確認ください。</footer>
+{% else %}
+<header class="top">
+  <div class="row">
+    <a class="logo" href="/">SIT <span>情報検索</span></a>
+    <form class="search" action="/" method="get" role="search">
+      <input name="q" type="search" value="{{ q }}" autocomplete="off" aria-label="検索">
+      {% if tab != 'all' %}<input type="hidden" name="t" value="{{ tab }}">{% endif %}
+      <button type="submit" aria-label="検索">⌕</button>
+    </form>
+  </div>
+  <nav class="tabs">
+    {% for key, (label, _) in tabs.items() %}<a class="{{ 'on' if key == tab else '' }}" href="/?q={{ q | urlencode }}{% if key != 'all' %}&t={{ key }}{% endif %}">{{ label }}</a>{% endfor %}
+  </nav>
+</header>
+<main class="results">
+  {% if error %}<p class="notice">{{ error }}</p>
+  {% elif not hits %}<p class="notice">「{{ q }}」に一致する結果は見つかりませんでした。別の言葉や短い言葉で試してください。</p>
+  {% else %}
+  {% for h in hits %}
+  <div class="hit">
+    <div class="meta"><span>{{ (h.url or '') | replace('https://', '') | truncate(60, True, '…') }}</span><span class="badge">{{ h.badge }}</span>{% if h.date %}<span class="date">{{ h.date }}</span>{% endif %}</div>
+    <h2><a href="{{ h.url }}" rel="noopener">{{ h.title or h.url }}</a></h2>
+    <p>{{ h.snippet }}</p>
+    {% if h.section or h.more_in_document %}<div class="sub">{% if h.section %}{{ h.section }}{% endif %}{% if h.more_in_document %}{% if h.section %} · {% endif %}このページで他に {{ h.more_in_document }} 件該当{% endif %}</div>{% endif %}
+  </div>
+  {% endfor %}
+  {% if not more and hits|length >= 10 %}<div class="more"><a href="/?q={{ q | urlencode }}{% if tab != 'all' %}&t={{ tab }}{% endif %}&more=1">さらに表示</a></div>{% endif %}
+  {% if tab in ('all', 'bbs') %}<p class="notice">掲示板の内容は学生の投稿で、大学の公式情報ではありません。</p>{% endif %}
+  {% endif %}
+</main>
+<footer>学生による非公式の検索サービスです。内容は必ず各リンク先の原文でご確認ください。</footer>
+{% endif %}
+</body>
+</html>

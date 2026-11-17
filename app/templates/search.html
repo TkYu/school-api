@@ -1,0 +1,17 @@
+{% extends "base.html" %}{% block title %}{{ t('nav.search') }}{% endblock %}
+{% block body %}
+<h1>{{ t('nav.search') }}</h1>
+<form class="card row" method="get" action="/admin/search">
+  <div style="flex:3"><input type="text" name="q" value="{{ q }}" placeholder="{{ t('search.placeholder') }}" autofocus></div>
+  <div><input type="text" name="source" value="{{ source }}" placeholder="{{ t('search.source_placeholder') }}"></div>
+  <div style="flex:0"><button class="primary">{{ t('action.search') }}</button></div>
+</form>
+{% if result %}
+{% for r in result.results %}<div class="card">
+  <div class="muted">{{ loop.index }} · {{ t('search.score') }} {{ r.score }} · {{ t('search.matched') }} {{ ', '.join(r.matched) }} · {{ r.section or '' }} · <a href="/admin/documents/{{ r.document_id }}">{{ t('doc.title', id=r.document_id) }}</a>
+    {% if r.course %} · {{ r.course.name }} ({{ r.course.code }}) {{ r.course.faculty }} {{ r.course.term }}{% endif %}
+    {% if r.url %} · <a href="{{ r.url }}" target="_blank" rel="noopener">{{ t('search.original') }} ↗</a>{% endif %}</div>
+  <div class="chunk">{{ r.text }}</div></div>
+{% else %}<div class="card muted">{{ t('search.none') }}</div>{% endfor %}
+{% endif %}
+{% endblock %}

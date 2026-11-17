@@ -1,0 +1,14 @@
+{% extends "base.html" %}{% block title %}{{ t('nav.log') }}{% endblock %}
+{% block body %}
+<h1>{{ t('nav.log') }}</h1>
+<form class="card row" method="get" action="/admin/log">
+  <div><select name="action"><option value="">{{ t('log.all_actions') }}</option>{% for a in actions %}<option value="{{ a.a }}" {{ 'selected' if a.a == action }}>{{ a.a }}</option>{% endfor %}</select></div>
+  <div><input type="text" name="actor" value="{{ actor }}" placeholder="{{ t('log.actor_placeholder') }}"></div>
+  <div style="flex:0"><button class="primary">{{ t('action.filter') }}</button></div>
+</form>
+<div class="card"><table>
+  <tr><th>{{ t('col.time') }}</th><th>{{ t('col.who') }}</th><th>{{ t('col.action') }}</th><th>{{ t('col.target') }}</th><th>{{ t('col.detail') }}</th></tr>
+  {% for a in rows %}<tr><td class="muted">{{ a.at.strftime('%Y-%m-%d %H:%M:%S') }}</td><td>{{ a.actor }}</td><td>{{ a.action }}</td><td>{{ a.target }}</td><td class="mono">{{ a.detail }}</td></tr>{% endfor %}
+</table></div>
+<p class="pager">{% if page > 1 %}<a href="?action={{ action }}&actor={{ actor|urlencode }}&page={{ page - 1 }}">{{ t('pager.prev') }}</a>{% endif %}{% if rows|length == 100 %}<a href="?action={{ action }}&actor={{ actor|urlencode }}&page={{ page + 1 }}">{{ t('pager.next') }}</a>{% endif %}</p>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}{% block title %}{{ t('nav.documents') }}{% endblock %}
+{% block body %}
+<h1>{{ t('nav.documents') }} <span class="muted">({{ total }})</span></h1>
+<form class="card row" method="get" action="/admin/documents">
+  {% if owner %}<input type="hidden" name="owner" value="{{ owner }}">{% endif %}
+  <div style="flex:3"><input type="text" name="q" value="{{ q }}" placeholder="{{ t('docs.search_placeholder') }}"></div>
+  <div><select name="source"><option value="">{{ t('docs.all_categories') }}</option>{% for s in sources %}<option value="{{ s.name }}" {{ 'selected' if s.name == source }}>{{ s.name }}</option>{% endfor %}</select></div>
+  <div><select name="state">{% for k, v in states.items() %}<option value="{{ k }}" {{ 'selected' if k == state }}>{{ t(v[0]) }}</option>{% endfor %}</select></div>
+  <div style="flex:0"><button class="primary">{{ t('action.filter') }}</button></div>
+</form>
+{% if owner %}<p class="muted">{{ t('docs.owner_filter') }} <a href="/admin/users/{{ owner }}">#{{ owner }}</a> · <a href="/admin/documents">{{ t('docs.clear_filter') }}</a></p>{% endif %}
+<form method="post" action="/admin/documents/bulk">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <input type="hidden" name="back" value="{{ request.url.path }}?{{ request.url.query }}">
+  <div class="card bulk">
+    <div><label>{{ t('docs.bulk_for') }}</label><select name="action">
+      <option value="reprocess">{{ t('action.reprocess') }}</option><option value="hide">{{ t('action.hide') }}</option><option value="show">{{ t('action.show') }}</option><option value="purge">{{ t('docs.purge_option') }}</option></select></div>
+    <div><label>{{ t('docs.reason_label') }}</label><input type="text" name="reason"></div>
+    <div><label>{{ t('docs.confirm_label') }}</label><input type="text" name="confirm"></div>
+    <div><button>{{ t('action.run') }}</button></div>
+  </div>
+  <div class="card"><table>
+    <tr><th><input type="checkbox" onclick="for (const c of document.querySelectorAll('input[name=ids]')) c.checked = this.checked"></th>
+        <th>#</th><th>{{ t('col.key') }}</th><th>{{ t('col.title') }}</th><th>{{ t('field.category') }}</th><th>{{ t('col.state') }}</th><th>{{ t('col.versions') }}</th><th>{{ t('col.last_seen') }}</th><th>{{ t('col.notes') }}</th></tr>
+    {% for d in rows %}<tr><td><input type="checkbox" name="ids" value="{{ d.id }}"></td>
+      <td><a href="/admin/documents/{{ d.id }}">{{ d.id }}</a></td><td><code>{{ d.key }}</code></td>
+      <td>{{ d.title or '' }}{% if d.url %} <a href="{{ d.url }}" target="_blank" rel="noopener">↗</a>{% endif %}</td><td><code>{{ d.source }}</code></td>
+      <td>{% if d.hidden %}<span class="badge retired" title="{{ d.hidden_reason }}">{{ t('docs.state_hidden') }}</span>{% elif d.gone %}<span class="badge retired">{{ t('docs.gone_short') }}</span>{% elif d.current_version_id %}<span class="badge published">{{ t('docs.live_short') }}</span>{% else %}<span class="badge staging">{{ t('docs.unpublished_short') }}</span>{% endif %}</td>
+      <td>{{ d.versions }}</td><td class="muted">{{ d.last_seen_at.strftime('%Y-%m-%d') }}</td>
+      <td>{% if d.notes %}{% if d.notes.get('eval_sum_not_100') %}<span class="warn">{{ t('note.eval_sum', n=d.eval_sum) }}</span>{% endif %}{% if d.notes.get('no_evaluation_table') %}<span class="warn">{{ t('note.no_eval') }}</span>{% endif %}{% if d.notes.get('evaluation_from_positions') %}<span class="muted">{{ t('note.eval_positions') }}</span>{% endif %}{% endif %}</td></tr>
+    {% else %}<tr><td colspan="9" class="muted">{{ t('docs.none') }}</td></tr>{% endfor %}
+  </table></div>
+</form>
+<p class="pager">{% for p in range(1, pages + 1) %}{% if p == page %}<span>{{ p }}</span>{% elif p <= 3 or p > pages - 3 or (p - page)|abs <= 2 %}<a href="?q={{ q|urlencode }}&source={{ source|urlencode }}&state={{ state }}{% if owner %}&owner={{ owner }}{% endif %}&page={{ p }}">{{ p }}</a>{% elif (p - page)|abs == 3 %}…{% endif %}{% endfor %}</p>
+{% endblock %}

@@ -1,0 +1,48 @@
+[project]
+name = "school-api"
+version = "0.1.0"
+description = "Read-only school information API for Tomo packs (search over syllabi, the official site, forums) with an admin ingest API and web UI."
+requires-python = ">=3.14,<3.15"
+dependencies = [
+  "fastapi>=0.120",
+  "uvicorn[standard]>=0.38",
+  "gunicorn>=23",
+  "uvicorn-worker>=0.4",
+  "psycopg[binary]>=3.2",
+  "psycopg-pool>=3.2",
+  "pydantic-settings>=2.11",
+  "argon2-cffi>=25.1",
+  "itsdangerous>=2.2",
+  "jinja2>=3.1",
+  "python-multipart>=0.0.20",
+  "httpx>=0.28",
+  "pymupdf>=1.26",
+  "sentence-transformers>=5.1",
+  "sentencepiece>=0.2",
+  "torch>=2.9",
+]
+
+# CPU-only PyTorch (the host has no GPU; the default wheels bring several GB of CUDA)
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[dependency-groups]
+dev = ["pytest>=8.4"]
+
+[project.scripts]
+school-api = "app.cli:main"
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

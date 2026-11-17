@@ -1,0 +1,32 @@
+{% extends "base.html" %}{% block title %}{{ t('doc.title', id=d.id) }}{% endblock %}
+{% block body %}
+<h1>{{ t('doc.title', id=d.id) }} <code>{{ d.key }}</code> {% if d.gone %}<span class="badge retired">{{ t('docs.state_gone') }}</span>{% endif %}{% if d.hidden_at %} <span class="badge retired">{{ t('docs.state_hidden') }}</span>{% endif %}</h1>
+<div class="card">
+  {% if d.hidden_at %}
+  <p class="warn">{{ t('doc.hidden_note', at=d.hidden_at.strftime('%Y-%m-%d %H:%M'), by=d.hidden_by, reason=d.hidden_reason) }}</p>
+  <form method="post" action="/admin/documents/{{ d.id }}/show" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="primary">{{ t('action.show') }}</button></form>
+  {% else %}
+  <form method="post" action="/admin/documents/{{ d.id }}/hide" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}">
+    <input type="text" name="reason" placeholder="{{ t('doc.hide_reason') }}" required minlength="3" style="width:260px"> <button>{{ t('action.hide') }}</button></form>
+  {% endif %}
+  <form method="post" action="/admin/documents/{{ d.id }}/reprocess" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}"><button>{{ t('action.reprocess') }}</button></form>
+</div>
+<div class="card"><table>
+  <tr><th>{{ t('col.version') }}</th><th>{{ t('col.title') }}</th><th>{{ t('col.first_seen') }}</th><th>{{ t('col.last_seen') }}</th><th>{{ t('col.batch') }}</th></tr>
+  {% for v in versions %}<tr><td><a href="/admin/documents/{{ d.id }}/versions/{{ v.id }}">{{ v.id }}</a>{% if v.id == d.current_version_id %} <span class="badge published">{{ t('doc.current') }}</span>{% endif %}</td>
+    <td>{{ v.title or '' }}{% if v.url %} <a href="{{ v.url }}" target="_blank" rel="noopener">↗</a>{% endif %}</td>
+    <td class="muted">{{ v.first_seen_at.strftime('%Y-%m-%d %H:%M') }}</td><td class="muted">{{ v.last_seen.strftime('%Y-%m-%d %H:%M') if v.last_seen }}</td>
+    <td><a href="/admin/batches/{{ v.batch_id }}">{{ v.label }}</a> <span class="badge {{ v.status }}">{{ t('state.' ~ v.status) }}</span></td></tr>{% endfor %}
+</table></div>
+<h2>{{ t('doc.chunks_of', id=shown) }}</h2>
+{% for c in chunks %}<div class="card"><div class="muted">{{ c.ord }} · {{ c.section or '—' }}{% if not c.embedded %} · <span class="warn">{{ t('doc.no_vector') }}</span>{% endif %}</div><div class="chunk">{{ c.text }}</div></div>
+{% else %}<div class="card muted">{{ t('doc.no_chunks') }}</div>{% endfor %}
+<h2 class="warn">{{ t('doc.purge_title') }}</h2>
+<form class="card" method="post" action="/admin/documents/{{ d.id }}/purge">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <p class="muted">{{ t('doc.purge_help') }}</p>
+  <div class="row"><div><label>{{ t('field.reason_logged') }}</label><input type="text" name="reason" required minlength="3"></div>
+    <div><label>{{ t('doc.purge_type_id', id=d.id) }}</label><input type="text" name="confirm" required></div></div>
+  <p><button class="danger">{{ t('doc.purge_button') }}</button></p>
+</form>
+{% endblock %}

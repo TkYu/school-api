@@ -1,0 +1,61 @@
+{% extends "base.html" %}{% block title %}{{ t('my.title') }}{% endblock %}
+{% block body %}
+<h1>{{ t('my.title') }}</h1>
+{% if not categories %}
+<div class="card warn">{{ t('my.no_categories') }}</div>
+{% else %}
+<form class="card" id="upload" method="post" action="/admin/my/upload" enctype="multipart/form-data">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <label>{{ t('field.category') }}</label>
+  <select name="category" required>{% for c in categories %}<option value="{{ c.name }}">{{ c.label }}</option>{% endfor %}</select>
+  <label>{{ t('field.files') }}</label>
+  <div class="drop" id="drop" style="display:none">{{ t('my.drop') }}<br><span class="muted" id="chosen"></span></div>
+  <input type="file" name="files" id="files" multiple>
+  <p class="muted">{{ t('my.formats', mb=max_file, total=max_total) }}</p>
+  {% if user.role == 'admin' %}
+  <p><label class="inline"><input type="checkbox" name="publish" value="true" checked> {{ t('my.publish_now') }}</label> · <a href="/admin/upload">{{ t('my.advanced') }}</a></p>
+  {% else %}
+  <p class="muted">{{ t('my.direct') if direct else t('my.reviewed') }}</p>
+  {% endif %}
+  <p><button class="primary" id="send">{{ t('my.submit') }}</button></p>
+  <div class="progress" id="progress"><div></div></div>
+</form>
+{% endif %}
+<h2>{{ t('my.list') }}</h2>
+<div class="card"><table>
+  <tr><th>{{ t('col.submitted') }}</th><th>{{ t('field.category') }}</th><th>{{ t('col.files') }}</th><th>{{ t('col.state') }}</th><th>{{ t('col.skipped') }}</th><th></th></tr>
+  {% for b in batches %}<tr>
+    <td><a href="/admin/my/batches/{{ b.id }}">{{ b.started_at.strftime('%Y-%m-%d %H:%M') }}</a></td><td>{{ b.category }}</td><td>{{ b.files }}</td>
+    <td><span class="badge {{ b.status }}">{{ t('state.' ~ b.status) }}</span></td>
+    <td class="muted">{{ b.stats.get('skipped', [])|length or '' }}</td>
+    <td>{% if b.status in ('staging', 'published') %}<form method="post" action="/admin/my/batches/{{ b.id }}/retire" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}"><button>{{ t('my.withdraw') if b.status == 'staging' else t('my.take_down') }}</button></form>{% endif %}</td></tr>
+  {% else %}<tr><td colspan="6" class="muted">{{ t('my.none') }}</td></tr>{% endfor %}
+</table></div>
+<script>
+(() => {
+  const form = document.getElementById('upload'); if (!form) return;
+  const drop = document.getElementById('drop'), input = document.getElementById('files'), chosen = document.getElementById('chosen');
+  const bar = document.getElementById('progress'), fill = bar.firstElementChild, send = document.getElementById('send');
+  input.style.display = "none"; drop.style.display = "block";   // without script: the plain file field
+  const show = () => { chosen.textContent = [...input.files].map(f => f.name).join(', '); };
+  drop.addEventListener('click', () => input.click());
+  input.addEventListener('change', show);
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+  drop.addEventListener('drop', e => {
+    e.preventDefault(); drop.classList.remove('over');
+    const dt = new DataTransfer(); for (const f of [...input.files, ...e.dataTransfer.files]) dt.items.add(f);
+    input.files = dt.files; show();
+  });
+  form.addEventListener('submit', e => {
+    if (!input.files.length) { e.preventDefault(); input.click(); return; }
+    e.preventDefault(); send.disabled = true; bar.style.visibility = 'visible';
+    const xhr = new XMLHttpRequest();
+    xhr.upload.onprogress = p => { if (p.lengthComputable) fill.style.width = (100 * p.loaded / p.total) + '%'; };
+    xhr.onload = () => { location.href = xhr.responseURL || '/admin/my'; };
+    xhr.onerror = () => { send.disabled = false; bar.style.visibility = 'hidden'; alert({{ t('my.network_error')|tojson }}); };
+    xhr.open('POST', form.action); xhr.send(new FormData(form));
+  });
+})();
+</script>
+{% endblock %}

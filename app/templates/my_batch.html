@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% block title %}{{ t('my.title') }}{% endblock %}
+{% block body %}
+<h1><a href="/admin/my">{{ t('my.title') }}</a> · {{ b.started_at.strftime('%Y-%m-%d %H:%M') }} <span class="badge {{ b.status }}">{{ t('state.' ~ b.status) }}</span></h1>
+<div class="card"><p>{{ t('field.category') }}: {{ b.category }} · {{ t('state_help.' ~ b.status) }}</p></div>
+<div class="card"><table>
+  <tr><th>{{ t('col.file') }}</th><th>{{ t('col.title') }}</th><th>{{ t('col.size') }}</th><th>{{ t('col.chunks') }}</th></tr>
+  {% for d in docs %}<tr><td><code>{{ d.key.split('/', 1)[1] if '/' in d.key else d.key }}</code></td><td>{{ d.title or '' }}</td>
+    <td class="muted">{{ ((d.size or 0) / 1024)|round(1) }} KB</td>
+    <td>{% if d.parse_error %}<span class="warn">{{ t('my.parse_error') }}</span>{% elif d.chunks %}{{ d.chunks }}{% else %}<span class="muted">{{ t('my.processing') }}</span>{% endif %}</td></tr>
+  {% endfor %}
+</table></div>
+{% if b.stats.get('skipped') %}
+<h2>{{ t('col.skipped') }}</h2>
+<div class="card"><table>{% for p, r in b.stats['skipped'] %}<tr><td><code>{{ p }}</code></td><td class="muted">{{ t(r) }}</td></tr>{% endfor %}</table></div>
+{% endif %}
+{% endblock %}

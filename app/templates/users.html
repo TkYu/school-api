@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% block title %}{{ t('nav.users') }}{% endblock %}
+{% block body %}
+<h1>{{ t('nav.users') }} <span class="muted">({{ rows|length }})</span></h1>
+<div class="card"><table>
+  <tr><th>{{ t('field.email') }}</th><th>{{ t('field.nickname') }}</th><th>{{ t('col.role') }}</th><th>{{ t('col.state') }}</th><th>{{ t('users.submissions') }}</th><th>{{ t('nav.review') }}</th><th>{{ t('users.last_login') }}</th></tr>
+  {% for u in rows %}<tr><td><a href="/admin/users/{{ u.id }}">{{ u.email }}</a></td><td>{{ u.nickname }}</td><td>{{ t('role.' ~ u.role) }}</td>
+    <td>{% if u.disabled_at %}<span class="badge retired">{{ t('users.disabled') }}</span>{% elif not u.confirmed_at %}<span class="badge staging">{{ t('users.unconfirmed') }}</span>{% else %}<span class="badge published">{{ t('users.active') }}</span>{% endif %}</td>
+    <td>{{ u.batches }}</td><td>{% if u.waiting %}<span class="warn">{{ u.waiting }}</span>{% else %}0{% endif %}</td>
+    <td class="muted">{{ u.last_login_at.strftime('%Y-%m-%d %H:%M') if u.last_login_at else '—' }}</td></tr>
+  {% else %}<tr><td colspan="7" class="muted">—</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

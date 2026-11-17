@@ -1,0 +1,23 @@
+{% extends "base.html" %}{% block title %}{{ t('upload.title') }}{% endblock %}
+{% block body %}
+<h1>{{ t('upload.title') }}</h1>
+<p class="muted">{{ t('upload.intro') }} <a href="/admin/my">{{ t('nav.upload') }}</a></p>
+<form class="card" method="post" action="/admin/upload" enctype="multipart/form-data">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <div class="row">
+    <div><label>{{ t('upload.source') }}</label>
+      <input type="text" name="source" list="sources" required pattern="[a-z0-9][a-z0-9-]{1,63}">
+      <datalist id="sources">{% for s in sources %}<option value="{{ s.name }}">{{ s.kind }}</option>{% endfor %}</datalist></div>
+    <div><label>{{ t('col.parser') }}</label><select name="kind">{% for k in ('upload', 'syllabus', 'site', 'bbs') %}<option value="{{ k }}">{{ t('kind.' ~ k) }}</option>{% endfor %}</select></div>
+  </div>
+  <div class="row">
+    <div><label>{{ t('upload.label') }}</label><input type="text" name="label" required></div>
+    <div><label>{{ t('upload.key_prefix') }}</label><input type="text" name="key_prefix"></div>
+  </div>
+  <label>{{ t('upload.url_template') }}</label><input type="text" name="url_template">
+  <label>{{ t('field.files') }}</label><input type="file" name="files" multiple required>
+  <p><label class="inline"><input type="checkbox" name="full" value="true"> {{ t('upload.full') }}</label></p>
+  <p><label class="inline"><input type="checkbox" name="publish" value="true"> {{ t('upload.publish') }}</label></p>
+  <p><button class="primary">{{ t('upload.submit') }}</button></p>
+</form>
+{% endblock %}

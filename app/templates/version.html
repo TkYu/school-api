@@ -1,0 +1,17 @@
+{% extends "base.html" %}{% block title %}{{ t('version.title', id=v.id) }}{% endblock %}
+{% block body %}
+<h1><a href="/admin/documents/{{ document_id }}">{{ t('doc.title', id=document_id) }}</a> · {{ t('version.title', id=v.id) }} <span class="badge {{ v.status }}">{{ v.label }}</span></h1>
+<div class="card"><p>{{ v.title or '' }} · {{ t('col.first_seen') }} {{ v.first_seen_at.strftime('%Y-%m-%d %H:%M') }}{% if v.url %} · <a href="{{ v.url }}" target="_blank" rel="noopener">{{ t('search.original') }} ↗</a>{% endif %}</p></div>
+{% if v.meta and v.meta.parse_error %}<div class="card warn">{{ t('my.parse_error') }}: {{ v.meta.parse_error }}</div>{% endif %}
+{% if events %}<h2>{{ t('version.calendar') }}</h2>
+<div class="card"><p class="muted">{{ t('version.calendar_summary', year=events[0].year, program=events[0].program, n=events|length) }}{% if events|selectattr('note')|list %} · <strong>{{ t('version.calendar_check', n=events|selectattr('note')|list|length) }}</strong>{% endif %}. {{ t('version.calendar_api') }}</p>
+<table><tr><th>{{ t('version.term') }}</th><th>{{ t('version.start') }}</th><th>{{ t('version.end') }}</th><th>{{ t('version.printed') }}</th><th>{{ t('version.event') }}</th><th>{{ t('col.notes') }}</th></tr>
+{% for e in events %}<tr{% if e.note %} class="warn"{% endif %}><td>{{ e.term }}</td><td>{{ e.start_date }}</td><td>{{ e.end_date if e.end_date != e.start_date else '' }}</td><td>{{ e.date_text }}</td><td>{{ e.label }}</td><td>{{ e.note or '' }}</td></tr>{% endfor %}
+</table></div>{% endif %}
+{% if v.meta and v.meta.calendar_notes %}<div class="card warn">{{ t('version.calendar_notes') }} {{ v.meta.calendar_notes|join('; ') }}</div>{% endif %}
+<h2>{% if prev %}{{ t('version.compared', id=prev.id, date=prev.first_seen_at.strftime('%Y-%m-%d')) }}{% else %}{{ t('version.first') }}{% endif %}</h2>
+{% if diff is not none %}<div class="card diff">{% for line in diff %}<div class="{{ 'add' if line.startswith('+') and not line.startswith('+++') else 'del' if line.startswith('-') and not line.startswith('---') else 'hunk' if line.startswith('@@') else '' }}">{{ line }}</div>{% else %}<span class="muted">{{ t('version.no_change') }}</span>{% endfor %}</div>{% endif %}
+<h2>{{ t('col.chunks') }}</h2>
+{% for c in chunks %}<div class="card"><div class="muted">{{ c.ord }} · {{ c.section or '—' }}</div><div class="chunk">{{ c.text }}</div></div>{% else %}<div class="card muted">{{ t('version.no_chunks') }}</div>{% endfor %}
+<h2>{{ t('version.full_text') }}</h2><div class="card chunk">{{ v.body or t('version.not_parsed') }}</div>
+{% endblock %}

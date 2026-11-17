@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% block title %}{{ t('reset.title') }}{% endblock %}
+{% block body %}
+<div class="card narrow">
+  <h1>{{ t('reset.title') }}</h1>
+  <form method="post" action="/admin/reset">
+    <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="token" value="{{ token }}">
+    <label>{{ t('field.password_new') }}</label><input type="password" name="password" autocomplete="new-password" minlength="10" required autofocus>
+    <label>{{ t('field.password_again') }}</label><input type="password" name="password2" autocomplete="new-password" minlength="10" required>
+    <p><button class="primary">{{ t('reset.submit') }}</button></p>
+  </form>
+</div>
+{% endblock %}

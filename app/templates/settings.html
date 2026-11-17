@@ -1,0 +1,14 @@
+{% extends "base.html" %}{% block title %}{{ t('settings.title') }}{% endblock %}
+{% block body %}
+<h1>{{ t('settings.title') }}</h1>
+<form class="card" method="post" action="/admin/settings" style="max-width:520px">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <label>{{ t('field.email') }}</label><input type="email" value="{{ user.email }}" disabled>
+  <label>{{ t('field.nickname') }}</label><input type="text" name="nickname" value="{{ user.nickname }}" maxlength="60" required>
+  <label>{{ t('field.language') }}</label>
+  <select name="lang">{% for code, name in langs.items() %}<option value="{{ code }}" {{ 'selected' if code == user.lang }}>{{ name }}</option>{% endfor %}</select>
+  <p class="muted">{{ t('settings.lang_note') }}</p>
+  <p><button class="primary">{{ t('action.save') }}</button></p>
+</form>
+<div class="card" style="max-width:520px"><a href="/admin/password">{{ t('password.title') }}</a></div>
+{% endblock %}

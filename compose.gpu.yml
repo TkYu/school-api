@@ -1,0 +1,106 @@
+# School information API on one host, with an NVIDIA GPU for the embeddings: compose.yml plus a CUDA build of PyTorch,
+# the GPU for the API (query vectors) and the worker (document vectors). Host: the NVIDIA driver and the NVIDIA
+# Container Toolkit (docker run --gpus all nvidia/cuda:12.8.0-base-ubuntu24.04 nvidia-smi must work).
+#   docker compose -f compose.gpu.yml up -d     (or COMPOSE_FILE=compose.gpu.yml in .env)
+# Everything else as in compose.yml (CPU only). The API listens on 127.0.0.1:${API_PORT:-8000}
+# for a reverse proxy on the same host (nginx, Caddy …); nothing else is published. The database and the worker are
+# not reachable from outside; the API and the worker share the original files. Data lives in named volumes
+# (docker volume ls: <project>_db, _files, _models); back up with deploy/backup.sh.
+#
+#   mkdir -p secrets && openssl rand -hex 24 > secrets/db_password     # once
+#   cp .env.example .env    # then fill it in (INGEST_TOKEN, SESSION_SECRET, PUBLIC_URL, SIGNUP_ALLOWLIST, SMTP_*)
+#   docker compose up -d db && docker compose run --rm api school-api migrate && docker compose up -d
+name: school-api
+
+services:
+  db:
+    image: paradedb/paradedb:0.26.6-pg18   # PostgreSQL 18 + pg_search 0.26.6 (+ pgvector, which it needs)
+    command: ["postgres", "-c", "shared_preload_libraries=pg_search"]
+    environment:
+      POSTGRES_DB: school
+      POSTGRES_USER: school
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets: [db_password]
+    volumes:
+      - db:/var/lib/postgresql                # PostgreSQL 18 images keep the data in 18/docker below this
+    networks: [backend]
+    mem_limit: 1g
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U school -d school"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      args: { TORCH: cu128 }                  # PyTorch for CUDA 12.8 instead of the CPU-only build
+    image: school-api:gpu
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://school@db:5432/school
+      DATABASE_PASSWORD_FILE: /run/secrets/db_password
+      HF_HUB_OFFLINE: "1"                     # the model comes from the models volume (the worker downloads it)
+      TORCH_THREADS: "2"
+      EMBED_DEVICE: cuda
+    secrets: [db_password]
+    ports:
+      - "127.0.0.1:${API_PORT:-8000}:8000"    # only this host: put a reverse proxy with TLS in front
+    volumes:
+      - models:/models                        # read only in practice (no :ro: whichever service makes the volume, it gets the image's owner)
+      - files:/data/files                     # the API stores uploads and deletes files on purge
+    networks: [backend, front]                # front: needed to publish the port (it also lets the API out)
+    depends_on:
+      db: { condition: service_healthy }
+    mem_limit: 4g
+    deploy:
+      resources:
+        reservations:
+          devices: [{ driver: nvidia, count: all, capabilities: [gpu] }]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/v1/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      start_period: 120s                      # the embedding model loads before the first request
+      retries: 3
+    restart: unless-stopped
+
+  worker:
+    image: school-api:gpu
+    command: ["python", "-m", "app.worker"]
+    env_file: .env
+    environment:
+      TORCH_THREADS: "2"                      # CPU work around the GPU (tokenising, the database)
+      EMBED_DEVICE: cuda
+      DATABASE_URL: postgresql://school@db:5432/school
+      DATABASE_PASSWORD_FILE: /run/secrets/db_password
+    secrets: [db_password]
+    volumes:
+      - models:/models
+      - files:/data/files
+    networks: [backend, egress]               # internet: mail (SMTP) and the first model download
+    depends_on:
+      db: { condition: service_healthy }
+    mem_limit: 4g
+    cpus: 2
+    deploy:
+      resources:
+        reservations:
+          devices: [{ driver: nvidia, count: all, capabilities: [gpu] }]
+    restart: unless-stopped
+
+networks:
+  backend:
+    internal: true
+  front: {}
+  egress: {}
+
+volumes:
+  db: {}
+  files: {}
+  models: {}
+
+secrets:
+  db_password:
+    file: ./secrets/db_password
